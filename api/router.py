@@ -9,8 +9,6 @@ import asyncio
 from sse_starlette.sse import EventSourceResponse
 import logging
 
-from llm.model import LlamaModel
-from rag.retriever import MilvusRetriever
 from utils.prompt import PromptBuilder
 from config.setting import HISTORY_DIR
 

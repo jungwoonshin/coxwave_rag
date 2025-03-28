@@ -44,4 +44,4 @@ class DataLoader:
         if self.data is None:
             self.load_data()
         
-        return [(question, answer) for question, answer in self.data.items()]
+        return [{'question':question, 'answer':answer} for question, answer in self.data.items()]

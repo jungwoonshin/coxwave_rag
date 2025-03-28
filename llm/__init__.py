@@ -1,6 +1,7 @@
 """
 Language model package for the FAQ answering system.
 """
-from llm.model import LlamaModel
+from llm.meta_model import LlamaModel
+from llm.openai_model import OpenAIModel
 
-__all__ = ['LlamaModel']
+__all__ = ['LlamaModel','OpenAIModel']

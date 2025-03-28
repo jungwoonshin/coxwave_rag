@@ -1,20 +1,21 @@
 
 
-import uvicorn
 import logging
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config.setting import (
-    HF_TOKEN, LLM_MODEL_NAME, EMBEDDING_MODEL_NAME, 
-    MILVUS_HOST, MILVUS_PORT, MILVUS_COLLECTION, VECTOR_DIM,
-    DATA_PATH, API_HOST, API_PORT
-)
+from api.router import router
+from config.setting import (API_HOST, API_PORT, DATA_PATH, OPENAI_LLM_MODEL_NAME,
+                            EMBEDDING_MODEL_NAME, HF_TOKEN, META_LLM_MODEL_NAME,
+                            MILVUS_COLLECTION, MILVUS_HOST, MILVUS_PORT,
+                            OPENAI_API_KEY, VECTOR_DIM)
 from data.loader import DataLoader
 from embedding.embedder import TextEmbedder
-from rag.retriever import MilvusRetriever
-from llm.model import LlamaModel
-from api.router import router
+from llm.meta_model import LlamaModel
+from rag.retriever import ChromaRetriever
+from llm.openai_model import OpenAIModel
 
 # Configure logging
 logging.basicConfig(
@@ -39,23 +40,18 @@ def initialize_components():
     data_loader = DataLoader(DATA_PATH)
     
     # Initialize text embedder
-    embedder = TextEmbedder(EMBEDDING_MODEL_NAME, HF_TOKEN)
+    embedder = TextEmbedder(EMBEDDING_MODEL_NAME, OPENAI_API_KEY)
     
     # Initialize Milvus retriever
-    retriever = MilvusRetriever(
-        embedder=embedder,
-        host=MILVUS_HOST,
-        port=MILVUS_PORT,
-        collection_name=MILVUS_COLLECTION,
-        vector_dim=VECTOR_DIM
+    retriever = ChromaRetriever(
+        embedder=embedder
     )
-    
     # Load FAQ data and set up the collection
     qa_pairs = data_loader.get_question_answer_pairs()
     retriever.setup_collection(qa_pairs)
     
     # Initialize LLM model
-    llm_model = LlamaModel(LLM_MODEL_NAME, HF_TOKEN)
+    llm_model = OpenAIModel(OPENAI_LLM_MODEL_NAME, OPENAI_API_KEY)
     
     logger.info("All components initialized successfully")
 

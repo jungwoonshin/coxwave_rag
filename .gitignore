@@ -4,3 +4,6 @@ config/
 
 *.pyc
 *.json
+*.bin
+*sqlite3
+*.pickle

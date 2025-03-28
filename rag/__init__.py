@@ -1,6 +1,6 @@
 """
 RAG (Retrieval-Augmented Generation) package for the FAQ answering system.
 """
-from rag.retriever import MilvusRetriever
+from rag.retriever import ChromaRetriever
 
-__all__ = ['MilvusRetriever']
+__all__ = ['ChromaRetriever']
