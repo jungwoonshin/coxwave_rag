@@ -1,25 +1,4 @@
-import pickle
 
-
-
-def read_pickle_file(file_path):
-    """
-    Read data from a pickle file
-    
-    Parameters:
-    file_path (str): Path to the pickle file
-    
-    Returns:
-    The unpickled data
-    """
-    try:
-        with open(file_path, 'rb') as file:
-            data = pickle.load(file)
-        return data
-    except FileNotFoundError:
-        print(f"Error: File not found at {file_path}")
-    except Exception as e:
-        print(f"Error occurred while reading the pickle file: {e}")
 
 import uvicorn
 import logging
