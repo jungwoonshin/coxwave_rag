@@ -1,16 +1,17 @@
+import asyncio
+import json
+import logging
+import os
+import time
+from typing import Any, Dict, List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Optional, Any
-import json
-import os
-import time
-import asyncio
 from sse_starlette.sse import EventSourceResponse
-import logging
 
-from utils.prompt import PromptBuilder
 from config.setting import HISTORY_DIR
+from utils.prompt import PromptBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -120,14 +121,7 @@ async def chat_stream(
     dependencies: tuple = Depends(get_chat_dependencies)
 ):
     """
-    Process a chat request and return a streaming response.
-    
-    Args:
-        request: Chat request with query and optional history
-        dependencies: Tuple of (llm_model, retriever)
-        
-    Returns:
-        Streaming response
+    Process a chat request and return a streaming response with proper Unicode support.
     """
     llm_model, retriever = dependencies
     
@@ -141,15 +135,20 @@ async def chat_stream(
     relevant = PromptBuilder.is_relevant([doc['score'] for doc in retrieved_docs])
     
     async def event_generator():
-        """Generate events for SSE streaming."""
+        """Generate events for SSE streaming with proper Unicode handling."""
         if not relevant:
             # For irrelevant queries, just send the standard message
-            yield json.dumps({"data": PromptBuilder.get_unrelated_message()})
+            message = PromptBuilder.get_unrelated_message()
+            yield f"data: {json.dumps({'text': message}, ensure_ascii=False)}\n\n"
             return
-        
+            
         # Generate streaming response using RAG
         prompt_template = PromptBuilder.get_rag_prompt()
         full_response = ""
+        
+        # For Korean text, character-by-character streaming may be more appropriate
+        # than trying to break at word boundaries
+        buffer = ""
         
         for text_chunk in llm_model.generate_rag_response(
             query=request.query,
@@ -159,8 +158,23 @@ async def chat_stream(
             stream=True
         ):
             full_response += text_chunk
-            yield json.dumps({"data": text_chunk})
-            await asyncio.sleep(0.01)  # Small delay to avoid overwhelming the client
+            buffer += text_chunk
+            
+            # Send complete sentences if possible
+            if any(end_marker in buffer for end_marker in ['.', '?', '!', '\n', '。', '？', '！']):
+                yield f"data: {json.dumps({'text': buffer}, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.05)
+                buffer = ""
+            
+            # If buffer gets too large, send it anyway (even if not a complete sentence)
+            elif len(buffer) >= 20:  # Adjust this number as needed
+                yield f"data: {json.dumps({'text': buffer}, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.05)
+                buffer = ""
+        
+        # Send any remaining content
+        if buffer:
+            yield f"data: {json.dumps({'text': buffer}, ensure_ascii=False)}\n\n"
         
         # Add the current query and response to history
         history.append({"role": "user", "content": request.query})

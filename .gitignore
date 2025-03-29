@@ -1,9 +1,11 @@
 
 config/
-
+dataset/validated/
+dataset/output/
 
 *.pyc
 *.json
 *.bin
 *sqlite3
 *.pickle
+*.pkl

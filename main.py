@@ -13,7 +13,7 @@ from config.setting import (API_HOST, API_PORT, DATA_PATH, OPENAI_LLM_MODEL_NAME
                             OPENAI_API_KEY, VECTOR_DIM)
 from data.loader import DataLoader
 from embedding.embedder import TextEmbedder
-from llm.meta_model import LlamaModel
+from llm.llama_model import LlamaModel
 from rag.retriever import ChromaRetriever
 from llm.openai_model import OpenAIModel
 

@@ -74,42 +74,89 @@ class TextEmbedder:
     
     def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """
-        Get embeddings for a batch of texts.
+        Get embeddings for a batch of texts using efficient batching.
         
         Args:
             texts: List of texts to generate embeddings for
             
         Returns:
-            List of embedding vectors
+            List of embedding vectors in the same order as input texts
         """
         if not texts:
             return []
+        
+        # Process in optimal batch sizes
+        if len(texts) > self.max_batch_size:
+            logger.info(f"Input size {len(texts)} exceeds max batch size {self.max_batch_size}. Processing in multiple batches.")
+            all_embeddings = []
             
+            # Process in chunks of max_batch_size
+            for i in range(0, len(texts), self.max_batch_size):
+                batch = texts[i:i + self.max_batch_size]
+                batch_embeddings = self._process_single_batch(batch)
+                all_embeddings.extend(batch_embeddings)
+                
+            return all_embeddings
+        else:
+            # Process as a single batch if within size limit
+            return self._process_single_batch(texts)
+    
+    def _process_single_batch(self, texts: List[str]) -> List[List[float]]:
+        """
+        Process a single batch of texts that fits within the API limits.
+        
+        Args:
+            texts: List of texts to generate embeddings for (should be <= max_batch_size)
+            
+        Returns:
+            List of embedding vectors
+        """
         for attempt in range(self.retry_count):
             try:
+                start_time = time.time()
+                
                 # Make OpenAI API call with batch input
                 response = openai.embeddings.create(
                     model=self.model_name,
-                    input=texts
+                    input=texts,
+                    encoding_format="float"  # Explicitly request float format
                 )
+                
+                # Log performance metrics
+                duration = time.time() - start_time
+                logger.debug(f"Generated {len(texts)} embeddings in {duration:.2f}s ({len(texts)/duration:.1f} texts/sec)")
                 
                 # Extract embeddings from response, ensuring proper order
                 embeddings = [data.embedding for data in sorted(response.data, key=lambda x: x.index)]
+                
+                # Validate response
+                if len(embeddings) != len(texts):
+                    logger.warning(f"Received {len(embeddings)} embeddings but expected {len(texts)}")
+                    
                 return embeddings
                 
             except Exception as e:
-                logger.warning(f"Error generating batch embeddings (attempt {attempt+1}/{self.retry_count}): {e}")
+                logger.warning(f"Error generating batch embeddings (attempt {attempt+1}/{self.retry_count}): {str(e)}")
                 
-                # If batch is too large, try splitting it and processing separately
+                # Handle rate limiting
+                if "rate limit" in str(e).lower():
+                    # Exponential backoff
+                    backoff_time = self.retry_delay * (2 ** attempt)
+                    logger.info(f"Rate limited. Backing off for {backoff_time}s before retry.")
+                    time.sleep(backoff_time)
+                    continue
+                
+                # Handle token limit or other capacity issues
                 if "too many" in str(e).lower() and len(texts) > 1:
                     logger.info(f"Batch size {len(texts)} too large. Splitting and processing in smaller batches.")
                     
                     # Split the batch and process recursively
                     mid = len(texts) // 2
-                    first_half = self.get_embeddings_batch(texts[:mid])
-                    second_half = self.get_embeddings_batch(texts[mid:])
+                    first_half = self._process_single_batch(texts[:mid])
+                    second_half = self._process_single_batch(texts[mid:])
                     return first_half + second_half
                 
+                # General retry with delay
                 if attempt < self.retry_count - 1:
                     time.sleep(self.retry_delay)
                 else:

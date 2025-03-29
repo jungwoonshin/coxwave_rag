@@ -1,10 +1,14 @@
+# llm/llama_model.py
+# -*- coding: utf-8 -*-
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
-from typing import List, Dict, Any, Generator, Optional
+from typing import List, Dict, Any, Generator, Optional, Union
 import logging
 from threading import Thread
 
 logger = logging.getLogger(__name__)
+
 
 class LlamaModel:
     """
@@ -24,25 +28,51 @@ class LlamaModel:
         logger.info(f"Using device: {self.device}")
         
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
+            # Try with trust_remote_code=True which is often needed for custom models
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_name, 
+                token=token,
+                trust_remote_code=True
+            )
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 token=token,
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto"
+                device_map="auto",
+                trust_remote_code=True
             )
             logger.info(f"Loaded language model: {model_name}")
         except Exception as e:
             logger.error(f"Error loading model {model_name}: {e}")
-            raise
+            # Try with a different approach if the first one fails
+            try:
+                logger.info(f"Retrying with different parameters...")
+                # Try with use_fast=False to fall back to Python tokenizer implementation
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    model_name, 
+                    token=token,
+                    trust_remote_code=True,
+                    use_fast=False
+                )
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    model_name,
+                    token=token,
+                    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                    device_map="auto",
+                    trust_remote_code=True
+                )
+                logger.info(f"Successfully loaded model with fallback method: {model_name}")
+            except Exception as fallback_error:
+                logger.error(f"Error in fallback loading method: {fallback_error}")
+                raise
     
     def generate(
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 512,
+        max_tokens: int = 256,
         stream: bool = False
-    ):
+    ) -> Union[str, Generator[str, None, None]]:
         """
         Generate a response from the LLM based on the given prompt.
         
@@ -83,7 +113,7 @@ class LlamaModel:
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
-                    max_new_tokens=max_tokens,
+                    max_new_tokens=max_tokens,  # Correct parameter name
                     temperature=temperature,
                     do_sample=temperature > 0,
                 )
@@ -99,7 +129,7 @@ class LlamaModel:
         chat_history: Optional[List[Dict[str, str]]] = None,
         prompt_template: str = "",
         stream: bool = False
-    ):
+    ) -> Union[str, Generator[str, None, None]]:
         """
         Generate a response using RAG retrieved documents.
         
