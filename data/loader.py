@@ -8,7 +8,7 @@ class DataLoader:
     """
     Class for loading and processing FAQ data from a pickle file.
     """
-    def __init__(self, data_path: str):
+    def __init__(self, data_path: str, augmented_data_path: str = 'dataset/qa_dataset_generated.pkl'):
         """
         Initialize the DataLoader with the path to the pickle file.
         
@@ -16,8 +16,10 @@ class DataLoader:
             data_path: Path to the pickle file containing FAQ data
         """
         self.data_path = data_path
+        self.augmented_data_path = augmented_data_path
         self.data = None
-    
+        self.augmented_data = None
+
     def load_data(self) -> Dict[str, str]:
         """
         Load the FAQ data from the pickle file.
@@ -28,6 +30,9 @@ class DataLoader:
         try:
             with open(self.data_path, 'rb') as f:
                 self.data = pickle.load(f)
+                self.augmented_data = pickle.load(open(self.augmented_data_path, 'rb'))
+                # combine two dictionaries
+                self.data.update(self.augmented_data)
             logger.info(f"Loaded {len(self.data)} FAQ pairs from {self.data_path}")
             return self.data
         except Exception as e:
