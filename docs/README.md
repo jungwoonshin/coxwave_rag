@@ -1,10 +1,10 @@
-# FAQ Answering System with Llama and Milvus
+# FAQ Answering System
 
-This project implements a FAQ answering system using Meta's Llama 3.2-8B-Instruct model and text-embedding-model 3 for embeddings. It uses Milvus as a vector database for RAG (Retrieval-Augmented Generation) and FastAPI for the API endpoints.
+This project implements a FAQ answering system using Meta's Llama 3.2-8B-Instruct model and text-embedding-model 3 for embeddings. It uses Chroma as a vector database for RAG (Retrieval-Augmented Generation) and FastAPI for the API endpoints.
 
 ## Features
 
-- RAG-based FAQ answering using Milvus as the vector database
+- RAG-based FAQ answering using chroma as the vector database
 - Uses HuggingFace libraries (no LangChain or similar frameworks)
 - Streaming responses with Server-Sent Events (SSE)
 - Fallback response for unrelated questions
@@ -44,9 +44,9 @@ project/
 ## Prerequisites
 
 1. Python 3.8+
-2. Milvus database (can be run with Docker)
-3. HuggingFace API token with access to required models
-4. GPU recommended for faster inference
+2. Chroma database (can be run with Docker)
+4. HuggingFace API token with access to required models
+5. GPU recommended for faster inference
 
 ## Setup and Installation
 
@@ -62,25 +62,8 @@ project/
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
-
-4. Start Milvus with Docker (if you don't have a Milvus instance):
-   ```bash
-   docker run -d --name milvus \
-     -p 19530:19530 \
-     -p 19121:19121 \
-     -p 9091:9091 \
-     -v /path/to/milvus/data:/var/lib/milvus/data \
-     -v /path/to/milvus/conf:/var/lib/milvus/conf \
-     -v /path/to/milvus/logs:/var/lib/milvus/logs \
-     milvusdb/milvus:latest
-   ```
-
-5. Initialize the database with FAQ data:
-   ```bash
-   python initialize_db.py
-   ```
-
-6. Start the API server:
+   
+3. Start the API server:
    ```bash
    python main.py
    ```
