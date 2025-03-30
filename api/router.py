@@ -99,7 +99,6 @@ async def chat(
         history = []
 
     # Retrieve relevant documents
-
     retrieved_docs = retriever.retrieve(request.query, top_k=3, use_clustering=request.cluster)
 
     # Generate response using RAG
@@ -128,39 +127,43 @@ async def chat_stream(
     dependencies: tuple = Depends(get_chat_dependencies)
 ):
     """
-    Process a chat request and return a streaming response with proper Unicode support.
+    Process a chat request and return a streaming response.
+    
+    Args:
+        request: Chat request with query and optional history
+        dependencies: Tuple of (llm_model, retriever)
+        
+    Returns:
+        Streaming response
     """
-    llm_model, retriever  = dependencies
+    llm_model, retriever = dependencies
     
     # Convert pydantic model to dict for history
-    history = [msg.dict() for msg in request.history] if request.history else []
+    if request.history:
+        history = [msg.model_dump() for msg in request.history]
+    elif request.session_id:
+        history_file = os.path.join(HISTORY_DIR, f"{request.session_id}.json")
+        if os.path.exists(history_file):
+            with open(history_file, 'r', encoding='utf-8') as f:
+                history = json.load(f)
+        else:
+            history = []
+    else:
+        history = []
     
+    # Retrieve relevant documents
     retrieved_docs = retriever.retrieve(request.query, top_k=3, use_clustering=request.cluster)
-
-    # Check if query is relevant to the FAQ domain
-    relevant = PromptBuilder.is_relevant([doc['score'] for doc in retrieved_docs])
     
     async def event_generator():
         """Generate events for SSE streaming with proper Unicode handling."""
-        if not relevant:
-            # For irrelevant queries, just send the standard message
-            message = PromptBuilder.get_unrelated_message()
-            yield f"data: {json.dumps({'text': message}, ensure_ascii=False)}\n\n"
-            return
-            
-        # Generate streaming response using RAG
-        prompt_template = PromptBuilder.get_rag_prompt()
-        full_response = ""
+        # Generate prompt using the same method as in chat()
+        prompt = PromptBuilder.get_rag_prompt(history=history, context=retrieved_docs, query=request.query)
         
-        # For Korean text, character-by-character streaming may be more appropriate
-        # than trying to break at word boundaries
+        full_response = ""
         buffer = ""
         
         for text_chunk in llm_model.generate_rag_response(
-            query=request.query,
-            retrieved_docs=retrieved_docs,
-            chat_history=history,
-            prompt_template=prompt_template,
+            prompt=prompt,
             stream=True
         ):
             full_response += text_chunk
@@ -189,5 +192,8 @@ async def chat_stream(
         # Save history if session_id is provided
         if request.session_id:
             save_chat_history(request.session_id, history)
+            
+        # Send the retrieved docs info at the end
+        yield f"data: {json.dumps({'retrieved_docs': retrieved_docs}, ensure_ascii=False)}\n\n"
         
     return EventSourceResponse(event_generator())
