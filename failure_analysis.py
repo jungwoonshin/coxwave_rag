@@ -170,12 +170,13 @@ def main():
         if not hasattr(args, 'batch_size'):
             args.batch_size = DEFAULT_BATCH_SIZE
         if not hasattr(args, 'include_variants'):
-            args.include_variants = False
+            args.include_variants = True
         if not hasattr(args, 'num_variants'):
             args.num_variants = DEFAULT_NUM_VARIANTS
         
         logger.info(f"No command specified. Defaulting to 'test' command with model: {args.llm_model}")
     
+    args.command = "test"
     # Convert sample_size=0 to None (test all questions)
     if hasattr(args, 'sample_size'):
         sample_size = args.sample_size if args.sample_size > 0 else None
