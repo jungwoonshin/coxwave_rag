@@ -14,12 +14,11 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 # Import necessary components
-from config.setting import (
-    EMBEDDING_MODEL_NAME, OPENAI_API_KEY, DATA_PATH
-)
+from config.setting import DATA_PATH, DEFAULT_BATCH_SIZE, EMBEDDING_MODEL_NAME, OPENAI_API_KEY
 from data.loader import DataLoader
 from embedding.embedder import TextEmbedder
 from rag.retriever import ChromaRetriever
+from rag.cluster_retriever import ClusteredChromaRetriever
 
 # Configure logging
 logging.basicConfig(
@@ -28,11 +27,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def main():
+def initialize_database():
     """Initialize the ChromaDB database with FAQ data using batched embedding generation."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Initialize ChromaDB with FAQ data")
-    parser.add_argument("--batch-size", type=int, default=2048, 
+    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, 
                         help="Batch size for embedding generation (default: 2048)")
     parser.add_argument("--force-refresh", action="store_true", 
                         help="Force regeneration of all embeddings")
@@ -140,7 +139,7 @@ def main():
     db_path = os.path.abspath(args.db_path)
     logger.info(f"Initializing ChromaDB at: {db_path}")
     
-    retriever = ChromaRetriever(
+    retriever = ClusteredChromaRetriever(
         embedder=embedder,
         collection_name=args.collection_name,
         db_path=db_path,

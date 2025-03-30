@@ -14,8 +14,10 @@ from config.setting import (API_HOST, API_PORT, DATA_PATH, OPENAI_LLM_MODEL_NAME
 from data.loader import DataLoader
 from embedding.embedder import TextEmbedder
 from llm.llama_model import LlamaModel
-from rag.retriever import ChromaRetriever
+from rag.cluster_retriever import ClusteredChromaRetriever
 from llm.openai_model import OpenAIModel
+from rag.retriever import ChromaRetriever
+from initialize_db import initialize_database
 
 # Configure logging
 logging.basicConfig(
@@ -35,6 +37,7 @@ def initialize_components():
     global data_loader, embedder, retriever, llm_model
     
     logger.info("Initializing components...")
+    initialize_database()
     
     # Initialize data loader
     data_loader = DataLoader(DATA_PATH)
@@ -43,11 +46,14 @@ def initialize_components():
     embedder = TextEmbedder(EMBEDDING_MODEL_NAME, OPENAI_API_KEY)
     
     # Initialize Milvus retriever
-    retriever = ChromaRetriever(
+    # retriever = ChromaRetriever(embedder=embedder)
+    
+    retriever = ClusteredChromaRetriever(
         embedder=embedder
     )
     # Load FAQ data and set up the collection
     qa_pairs = data_loader.get_question_answer_pairs()
+    # retriever.setup_collection(qa_pairs)
     retriever.setup_collection(qa_pairs)
     
     # Initialize LLM model
