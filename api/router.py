@@ -13,6 +13,7 @@ from sse_starlette.sse import EventSourceResponse
 from config.setting import HISTORY_DIR
 from utils.prompt import PromptBuilder
 
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -26,6 +27,7 @@ class ChatRequest(BaseModel):
     history: Optional[List[ChatMessage]] = None
     stream: bool = False
     session_id: Optional[str] = None
+    cluster: bool = True
 
 class ChatResponse(BaseModel):
     response: str
@@ -84,24 +86,16 @@ async def chat(
     history = [msg.dict() for msg in request.history] if request.history else []
     
     # Retrieve relevant documents
-    retrieved_docs = retriever.retrieve(request.query, top_k=3)
-    
-    # Check if query is relevant to the FAQ domain
-    relevant = PromptBuilder.is_relevant([doc['score'] for doc in retrieved_docs])
-    
-    if not relevant:
-        response = PromptBuilder.get_unrelated_message()
-    else:
-        # Generate response using RAG
-        prompt_template = PromptBuilder.get_rag_prompt()
-        response = llm_model.generate_rag_response(
-            query=request.query,
-            retrieved_docs=retrieved_docs,
-            chat_history=history,
-            prompt_template=prompt_template,
-            stream=False
-        )
-    
+
+    retrieved_docs = retriever.retrieve(request.query, top_k=3, use_clustering=request.cluster)
+
+    # Generate response using RAG
+    prompt = PromptBuilder.get_rag_prompt(history=history, context=retrieved_docs, query=request.query)
+    response = llm_model.generate_rag_response(
+        prompt=prompt,
+        stream=False
+    )
+
     # Add the current query and response to history
     history.append({"role": "user", "content": request.query})
     history.append({"role": "assistant", "content": response})
@@ -123,14 +117,13 @@ async def chat_stream(
     """
     Process a chat request and return a streaming response with proper Unicode support.
     """
-    llm_model, retriever = dependencies
+    llm_model, retriever  = dependencies
     
     # Convert pydantic model to dict for history
     history = [msg.dict() for msg in request.history] if request.history else []
     
-    # Retrieve relevant documents
-    retrieved_docs = retriever.retrieve(request.query, top_k=3)
-    
+    retrieved_docs = retriever.retrieve(request.query, top_k=3, use_clustering=request.cluster)
+
     # Check if query is relevant to the FAQ domain
     relevant = PromptBuilder.is_relevant([doc['score'] for doc in retrieved_docs])
     

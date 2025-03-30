@@ -79,10 +79,7 @@ class OpenAIModel:
     
     def generate_rag_response(
         self,
-        query: str,
-        retrieved_docs: List[Dict[str, Any]],
-        chat_history: Optional[List[Dict[str, str]]] = None,
-        prompt_template: str = "",
+        prompt: str,
         stream: bool = False
     ):
         """
@@ -98,28 +95,6 @@ class OpenAIModel:
         Returns:
             Generator yielding text chunks if stream=True, otherwise the complete response text
         """
-        # Format history if provided
-        history_text = ""
-        if chat_history and len(chat_history) > 0:
-            for message in chat_history:
-                if message["role"] == "user":
-                    history_text += f"사용자: {message['content']}\n"
-                else:
-                    history_text += f"시스템: {message['content']}\n"
-        
-        # Format retrieved documents
-        context = ""
-        for i, doc in enumerate(retrieved_docs):
-            context += f"문서 {i+1}:\n"
-            context += f"질문: {doc['question']}\n"
-            context += f"답변: {doc['answer']}\n\n"
-        
-        # Fill the prompt template
-        prompt = prompt_template.format(
-            context=context,
-            history=history_text,
-            query=query
-        )
         
         # Generate response
         return self.generate(prompt, stream=stream)
