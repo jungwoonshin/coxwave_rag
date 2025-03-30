@@ -1,12 +1,11 @@
-# fastapi==0.110.0
-# uvicorn==0.27.1
-# transformers==4.38.2
-# torch==2.2.0
-# pymilvus==2.3.2
-# numpy==1.24.3
-python-dotenv==1.0.1
-# sse-starlette==1.6.5
-huggingface_hub==0.21.0
+chromadb==0.6.3
+fastapi==0.115.12
+nltk==3.9.1
+numpy==1.26.4
+openai==1.68.2
+pandas==2.2.2
 pydantic==2.5.2
-# sentence-transformers==2.6.0
-# sseclient-py==1.7.2
+torch==2.6.0+cu126
+tqdm==4.66.5
+transformers==4.50.3
+uvicorn==0.34.0
