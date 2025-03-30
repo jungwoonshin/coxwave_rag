@@ -7,17 +7,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.router import router
-from config.setting import (API_HOST, API_PORT, DATA_PATH, OPENAI_LLM_MODEL_NAME,
-                            EMBEDDING_MODEL_NAME, HF_TOKEN, META_LLM_MODEL_NAME,
-                            MILVUS_COLLECTION, MILVUS_HOST, MILVUS_PORT,
-                            OPENAI_API_KEY, VECTOR_DIM)
+from config.setting import (API_HOST, API_PORT, DATA_PATH,
+                            EMBEDDING_MODEL_NAME, OPENAI_API_KEY,
+                            OPENAI_LLM_MODEL_NAME)
 from data.loader import DataLoader
 from embedding.embedder import TextEmbedder
-from llm.llama_model import LlamaModel
-from rag.cluster_retriever import ClusteredChromaRetriever
-from llm.openai_model import OpenAIModel
-from rag.retriever import ChromaRetriever
 from initialize_db import initialize_database
+from llm.openai_model import OpenAIModel
+from rag.cluster_retriever import ClusteredChromaRetriever
 
 # Configure logging
 logging.basicConfig(

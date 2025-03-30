@@ -4,20 +4,19 @@ Script to initialize the Chroma database with FAQ data.
 This script uses batch processing for embedding generation and creates a cache
 that can be reused by ChromaRetriever.
 """
+import argparse
+import hashlib
+import json
 import logging
 import os
-import json
-import hashlib
 import time
-import argparse
 from pathlib import Path
-from typing import List, Dict, Any
 
 # Import necessary components
-from config.setting import DATA_PATH, DEFAULT_BATCH_SIZE, EMBEDDING_MODEL_NAME, OPENAI_API_KEY
+from config.setting import (DATA_PATH, DEFAULT_BATCH_SIZE,
+                            EMBEDDING_MODEL_NAME, OPENAI_API_KEY)
 from data.loader import DataLoader
 from embedding.embedder import TextEmbedder
-from rag.retriever import ChromaRetriever
 from rag.cluster_retriever import ClusteredChromaRetriever
 
 # Configure logging

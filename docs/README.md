@@ -63,12 +63,6 @@ project/
    pip install -r requirements.txt
    ```
 
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings
-   ```
-
 4. Start Milvus with Docker (if you don't have a Milvus instance):
    ```bash
    docker run -d --name milvus \

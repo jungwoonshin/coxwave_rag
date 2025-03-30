@@ -48,7 +48,10 @@ def save_chat_history(session_id: str, history: List[Dict[str, str]]):
     history_file = os.path.join(HISTORY_DIR, f"{session_id}.json")
     
     try:
-        with open(history_file, 'w') as f:
+        # Load existing history if it exists
+
+        # Write combined history
+        with open(history_file, 'w', encoding='utf-8') as f:
             json.dump(history, f, ensure_ascii=False, indent=2)
     except Exception as e:
         logger.error(f"Error saving chat history: {e}")
@@ -83,8 +86,18 @@ async def chat(
     llm_model, retriever = dependencies
     
     # Convert pydantic model to dict for history
-    history = [msg.dict() for msg in request.history] if request.history else []
-    
+    if request.history:
+        history = [msg.model_dump() for msg in request.history]
+    elif request.session_id:
+        history_file = os.path.join(HISTORY_DIR, f"{request.session_id}.json")
+        if os.path.exists(history_file):
+            with open(history_file, 'r', encoding='utf-8') as f:
+                history = json.load(f)
+        else:
+            history = []
+    else:
+        history = []
+
     # Retrieve relevant documents
 
     retrieved_docs = retriever.retrieve(request.query, top_k=3, use_clustering=request.cluster)
