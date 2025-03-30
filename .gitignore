@@ -2,6 +2,7 @@
 config/
 dataset/validated/
 dataset/output/
+output/
 
 *.pyc
 *.json
