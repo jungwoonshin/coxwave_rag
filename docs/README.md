@@ -32,7 +32,7 @@ project/
 │   └── model.py          # Llama model class
 ├── rag/                  # RAG implementation
 │   ├── __init__.py
-│   └── retriever.py      # Milvus retriever class
+│   └── retriever.py      # Chroma retriever class
 ├── utils/                # Utility functions
 │   ├── __init__.py
 │   └── prompt.py         # Prompt templates
