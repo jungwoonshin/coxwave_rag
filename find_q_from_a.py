@@ -162,16 +162,13 @@ class QuestionAnswerGenerator:
         반환:
             질문-답변 쌍 목록 (dictionary 형태)
         """
-        qa_pairs = []
+        qa_pairs = {}
         
         for answer_idx, answer in enumerate(tqdm(answers, desc="Generating questions")):
             questions = self.generate_questions_from_answer(answer)
             
             for question in questions:
-                qa_pairs.append({
-                    "question": question,
-                    "answer": answer
-                })
+                qa_pairs[question] = answer
                 
             # 로그 출력
             if (answer_idx + 1) % 5 == 0 or answer_idx == len(answers) - 1:
@@ -179,7 +176,7 @@ class QuestionAnswerGenerator:
         
         return qa_pairs
     
-    def save_dataset(self, qa_pairs: List[Dict[str, str]], filename: str = "qa_dataset.pkl"):
+    def save_dataset(self, qa_pairs: Dict[str, str], filename: str = "qa_dataset.pkl"):
         """
         생성된 데이터셋을 pickle 파일로 저장
         
@@ -199,8 +196,9 @@ class QuestionAnswerGenerator:
         json_filename = f"{filename.rsplit('.', 1)[0]}.json"
         json_path = self.output_dir / json_filename
         
+        qa_pairs_json = [{"question": q, "answer": a} for q, a in qa_pairs.items()]
         with open(json_path, 'w', encoding='utf-8') as f:
-            json.dump(qa_pairs, f, ensure_ascii=False, indent=2)
+            json.dump(qa_pairs_json, f, ensure_ascii=False, indent=2)
             
         self.logger.info(f"Also saved as JSON to {json_path}")
         
@@ -211,7 +209,7 @@ if __name__ == "__main__":
     # 데이터 소스 설정
     USE_EXISTING_DATA = True  # 기존 데이터를 사용할지 여부
     EXISTING_DATA_PATH = "dataset/data.pkl"  # 기존 데이터 경로
-    SAMPLE_SIZE = 10  # 처리할 데이터 샘플 수 (전체 데이터 사용 시 None)
+    SAMPLE_SIZE = 500  # 처리할 데이터 샘플 수 (전체 데이터 사용 시 None)
     
     # OpenAI API 키 설정 (환경 변수에서 가져오거나 직접 입력)
     
@@ -263,7 +261,7 @@ if __name__ == "__main__":
     # 생성기 초기화 및 실행
     generator = QuestionAnswerGenerator(
         openai_api_key=OPENAI_API_KEY,
-        model_name=OPENAI_LLM_MODEL_NAME,  # gpt-3.5-turbo 모델 사용 (더 빠르고 비용 효율적)
+        model_name=OPENAI_LLM_MODEL_NAME,
         num_questions_per_answer=3,  # 답변당 3개 질문 생성
         output_dir="dataset",  # 저장 경로 설정
         verbose=True  # 상세 로그 출력
