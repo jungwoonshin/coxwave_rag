@@ -15,6 +15,7 @@ from embedding.embedder import TextEmbedder
 from initialize_db import initialize_database
 from llm.openai_model import OpenAIModel
 from rag.cluster_retriever import ClusteredChromaRetriever
+from preprocessing.remove_redundancy import preprocess_data
 
 # Configure logging
 logging.basicConfig(
@@ -34,6 +35,11 @@ def initialize_components():
     global data_loader, embedder, retriever, llm_model
     
     logger.info("Initializing components...")
+
+    # 불필요한 문구 제거
+    preprocess_data()
+
+    # 데이터베이스 설정정
     initialize_database()
     
     # Initialize data loader

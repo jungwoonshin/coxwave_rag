@@ -10,3 +10,7 @@ output/
 *sqlite3
 *.pickle
 *.pkl
+
+!dataset/cleaned_data.pkl
+!dataset/data.pkl
+

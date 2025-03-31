@@ -70,7 +70,7 @@ def clean_faq_dict(faq_dict):
     print(f"정리 완료: {len(cleaned_data)}개 항목")
     return cleaned_data
 
-def main():
+def preprocess_data():
     """메인 실행 함수"""
     try:
         # 입력 파일 읽기
