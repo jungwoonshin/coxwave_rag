@@ -120,38 +120,6 @@ coxwave_rag/                      # RAG 기반 FAQ 답변 시스템 프로젝트
 POST /api/chat
 ```
 
-Request body:
-```json
-{
-  "query": "스마트 스토어 배송은 얼마나 걸리나요?",
-  "history": [
-    {
-      "role": "user",
-      "content": "스마트 스토어는 무엇인가요?"
-    },
-    {
-      "role": "assistant",
-      "content": "스마트 스토어는 네이버에서 제공하는 온라인 쇼핑몰 플랫폼입니다."
-    }
-  ],
-  "session_id": "user123"
-}
-```
-
-Response:
-```json
-{
-  "response": "스마트 스토어의 배송 기간은 상품에 따라 다릅니다. 일반적으로 결제 완료 후 1-3일 내에 배송이 시작되며, 배송은 보통 1-2일 정도 소요됩니다. 혹시 빠른 배송이 필요하신가요?",
-  "retrieved_docs": [
-    {
-      "question": "배송 기간은 얼마나 걸리나요?",
-      "answer": "결제 완료 후 1-3일 내에 배송이 시작되며, 배송은 1-2일 정도 소요됩니다.",
-      "score": 0.15
-    },
-    // ... other docs
-  ]
-}
-```
 
 ### Chat Endpoint (Streaming)
 
