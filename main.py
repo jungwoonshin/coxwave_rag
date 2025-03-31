@@ -16,6 +16,7 @@ from initialize_db import initialize_database
 from llm.openai_model import OpenAIModel
 from rag.cluster_retriever import ClusteredChromaRetriever
 from preprocessing.remove_redundancy import preprocess_data
+from find_q_from_a import find_question_from_answer
 
 # Configure logging
 logging.basicConfig(
@@ -39,7 +40,10 @@ def initialize_components():
     # 불필요한 문구 제거
     preprocess_data()
 
-    # 데이터베이스 설정정
+    # 답변으로부터 질문을 생성
+    find_question_from_answer()
+
+    # 데이터베이스 설정
     initialize_database()
     
     # Initialize data loader

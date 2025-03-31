@@ -205,12 +205,17 @@ class QuestionAnswerGenerator:
         return str(file_path)
 
 # 메인 실행 부분
-if __name__ == "__main__":
+def find_question_from_answer():
     # 데이터 소스 설정
     USE_EXISTING_DATA = True  # 기존 데이터를 사용할지 여부
     EXISTING_DATA_PATH = "dataset/data.pkl"  # 기존 데이터 경로
     SAMPLE_SIZE = 500  # 처리할 데이터 샘플 수 (전체 데이터 사용 시 None)
     
+    filename = "dataset/qa_dataset_generated.pkl"
+    
+    if os.path.exists(filename):
+        print(f"이미 생성된 데이터 파일 '{filename}'을 로드합니다.")
+        return True
     # OpenAI API 키 설정 (환경 변수에서 가져오거나 직접 입력)
     
     if USE_EXISTING_DATA:
@@ -271,7 +276,6 @@ if __name__ == "__main__":
     qa_pairs = generator.generate_dataset(answers_to_use)
     
     # 저장
-    filename = "qa_dataset_generated.pkl"
     dataset_path = generator.save_dataset(qa_pairs, filename=filename)
     
     print(f"생성 완료! 데이터셋이 {dataset_path}에 저장되었습니다.")

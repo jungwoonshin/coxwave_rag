@@ -13,4 +13,6 @@ output/
 
 !dataset/cleaned_data.pkl
 !dataset/data.pkl
+!dataset/qa_dataset_generated.pkl
+
 
